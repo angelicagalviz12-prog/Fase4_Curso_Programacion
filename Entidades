@@ -1,1 +1,20 @@
+# Importo las herramientas necesarias para trabajar en clases abstractas.
+from abc import ABC, abstractmethod
 
+# Creo la clase abstracta que representa las entidades del sistema.
+class Entidad(ABC):
+    
+    # Inicio la clase abstracta que representa las entidades del sistema.
+    def _init_(self, identificador):
+        # Almaceno el identificador mediante un atributo encapsulado.
+        self._identificador = identificador
+        
+# Utilizo una propiedad para consultar el identificador.
+@property
+def identificador(self):
+    return self._identificador
+
+# Defino un método abstracto que implementaré en las clases derivadas.
+@abstractmethod
+def mostrar_information(self):
+    pass
