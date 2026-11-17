@@ -1,57 +1,183 @@
-# Importo el sistema de registro de eventos.
+# Importo las herramientas para registrar eventos.
 import logging
 
-# Importo el gestor que voy a probar.
-from clientes import GestorClientes
+# Importo las expresiones regulares para validar correos.
+import re
 
-# Importo la excepción base de las operaciones de clientes.
-from excepciones import ErrorCliente
+# Importo la clase base del sistema.
+from entidades import Entidad
+
+# Importo las excepciones que proporcionará el módulo compartido.
+from excepciones import (
+    DatosClienteInvalidosError,
+    ClienteDuplicadoError,
+    ClienteNoEncontradoError,
+)
+
+# Utilizo la configuración de logs del programa principal.
+logger = logging.getLogger(__name__)
 
 
-# Ejecuto las pruebas únicamente al iniciar este archivo directamente.
-if __name__ == "__main__":
-    # Configuro el archivo de logs para esta ejecución de prueba.
-    logging.basicConfig(
-        filename="sistema.log",
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        encoding="utf-8",
-    )
+# Represento un cliente mediante herencia de Entidad.
+class Cliente(Entidad):
 
-    # Obtengo el logger de la prueba.
-    logger = logging.getLogger(__name__)
+    # Recibo y valido los datos obligatorios del cliente.
+    def __init__(self, identificador=None, nombre=None, correo=None):
+        # Valido el identificador antes de crear el objeto.
+        identificador = self._validar_texto(
+            identificador, "identificador"
+        )
 
-    # Creo el gestor de clientes en memoria.
-    gestor = GestorClientes()
+        # Compruebo el nombre del cliente.
+        nombre = self._validar_nombre(nombre)
 
-    # Defino registros válidos e inválidos con datos ficticios.
-    casos = [
-        ("C001", "Ana Pérez", "ana@example.com"),
-        ("C001", "Luis Gómez", "luis@example.com"),
-        ("C002", "", "cliente@example.com"),
-        ("C003", "Laura Díaz", "correo-invalido"),
-        (None, "Pedro Ruiz", "pedro@example.com"),
-        ("C004", "Sofía López", "sofia@example.com"),
-    ]
+        # Compruebo el formato del correo.
+        correo = self._validar_correo(correo)
 
-    # Ejecuto cada caso independientemente.
-    for numero, datos in enumerate(casos, start=1):
-        # Intento registrar el cliente.
-        try:
-            cliente = gestor.registrar_cliente(*datos)
+        # Inicializo el identificador en la clase base.
+        super().__init__(identificador)
 
-        # Capturo los errores previstos y conservo su detalle en el log.
-        except ErrorCliente as error:
-            logger.exception("Error en el caso de clientes %s.", numero)
-            print(f"Caso {numero}: operación rechazada: {error}")
+        # Almaceno el nombre en un atributo privado.
+        self.__nombre = nombre
 
-        # Muestro el resultado únicamente si el registro fue exitoso.
-        else:
-            print(f"Caso {numero}: {cliente.mostrar_information()}")
+        # Almaceno el correo en un atributo privado.
+        self.__correo = correo
 
-        # Registro el cierre del intento, tanto si fue válido como inválido.
-        finally:
-            logger.info("Finalizó el caso de clientes %s.", numero)
+    # Defino una validación que no necesita acceder al objeto.
+    @staticmethod
+    def _validar_texto(valor, campo):
+        # Rechazo datos faltantes o que no sean texto.
+        if not isinstance(valor, str):
+            raise DatosClienteInvalidosError(
+                f"El campo {campo} es obligatorio y debe ser texto."
+            )
 
-    # Muestro que el sistema continuó después de los errores.
-    print(f"Clientes registrados: {len(gestor.listar_clientes())}")
+        # Elimino espacios externos.
+        valor = valor.strip()
+
+        # Rechazo cadenas vacías.
+        if not valor:
+            raise DatosClienteInvalidosError(
+                f"El campo {campo} no puede estar vacío."
+            )
+
+        # Devuelvo el dato validado.
+        return valor
+
+    # Defino las validaciones del nombre.
+    @staticmethod
+    def _validar_nombre(nombre):
+        # Compruebo que sea un texto no vacío.
+        nombre = Cliente._validar_texto(nombre, "nombre")
+
+        # Aplico el límite de longitud propuesto para el proyecto.
+        if not 2 <= len(nombre) <= 100:
+            raise DatosClienteInvalidosError(
+                "El nombre debe tener entre 2 y 100 caracteres."
+            )
+
+        # Verifico que el nombre contenga alguna letra.
+        if not any(caracter.isalpha() for caracter in nombre):
+            raise DatosClienteInvalidosError(
+                "El nombre debe contener al menos una letra."
+            )
+
+        # Devuelvo el nombre validado.
+        return nombre
+
+    # Defino una validación básica del correo electrónico.
+    @staticmethod
+    def _validar_correo(correo):
+        # Compruebo que el correo sea un texto no vacío.
+        correo = Cliente._validar_texto(correo, "correo")
+
+        # Verifico su estructura básica.
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", correo):
+            raise DatosClienteInvalidosError(
+                "El correo electrónico tiene un formato inválido."
+            )
+
+        # Devuelvo el correo validado.
+        return correo
+
+    # Permito consultar el nombre sin un setter público.
+    @property
+    def nombre(self):
+        # Devuelvo el nombre encapsulado.
+        return self.__nombre
+
+    # Permito consultar el correo sin un setter público.
+    @property
+    def correo(self):
+        # Devuelvo el correo encapsulado.
+        return self.__correo
+
+    # Implemento el método abstracto definido en Entidad.
+    def mostrar_information(self):
+        # Construyo la descripción del cliente.
+        return (
+            f"Cliente: {self.nombre} | "
+            f"Identificación: {self.identificador} | "
+            f"Correo: {self.correo}"
+        )
+
+
+# Gestiono los clientes mediante una lista en memoria.
+class GestorClientes:
+
+    # Inicializo el gestor.
+    def __init__(self):
+        # Creo la colección interna de clientes.
+        self.__clientes = []
+
+    # Registro clientes con datos válidos e identificadores únicos.
+    def registrar_cliente(
+        self, identificador=None, nombre=None, correo=None
+    ):
+        # Creo el cliente y ejecuto sus validaciones.
+        cliente = Cliente(identificador, nombre, correo)
+
+        # Verifico si el identificador ya está registrado.
+        if any(
+            existente.identificador == cliente.identificador
+            for existente in self.__clientes
+        ):
+            raise ClienteDuplicadoError(
+                "Ya existe un cliente con ese identificador."
+            )
+
+        # Agrego el cliente después de validar todos los datos.
+        self.__clientes.append(cliente)
+
+        # Registro el evento sin incluir datos personales.
+        logger.info("Cliente registrado correctamente.")
+
+        # Entrego el objeto para su uso en otros módulos.
+        return cliente
+
+    # Busco un cliente registrado.
+    def buscar_cliente(self, identificador=None):
+        # Valido el identificador recibido.
+        identificador = Cliente._validar_texto(
+            identificador, "identificador"
+        )
+
+        # Recorro la lista interna.
+        for cliente in self.__clientes:
+            # Compruebo si corresponde al cliente solicitado.
+            if cliente.identificador == identificador:
+                # Registro la consulta exitosa.
+                logger.info("Consulta de cliente realizada correctamente.")
+
+                # Devuelvo el cliente encontrado.
+                return cliente
+
+        # Informo que el cliente no está registrado.
+        raise ClienteNoEncontradoError(
+            "No existe un cliente con ese identificador."
+        )
+
+    # Consulto los clientes registrados.
+    def listar_clientes(self):
+        # Devuelvo una copia para proteger la lista interna.
+        return self.__clientes.copy()
