@@ -24,9 +24,7 @@ class Cliente(Entidad):
     # Recibo y valido los datos obligatorios del cliente.
     def __init__(self, identificador=None, nombre=None, correo=None):
         # Valido el identificador antes de crear el objeto.
-        identificador = self._validar_texto(
-            identificador, "identificador"
-        )
+        identificador = self._validar_texto(identificador, "identificador")
 
         # Compruebo el nombre del cliente.
         nombre = self._validar_nombre(nombre)
@@ -48,18 +46,14 @@ class Cliente(Entidad):
     def _validar_texto(valor, campo):
         # Rechazo datos faltantes o que no sean texto.
         if not isinstance(valor, str):
-            raise DatosClienteInvalidosError(
-                f"El campo {campo} es obligatorio y debe ser texto."
-            )
+            raise DatosClienteInvalidosError(f"El campo {campo} es obligatorio y debe ser texto.")
 
         # Elimino espacios externos.
         valor = valor.strip()
 
         # Rechazo cadenas vacías.
         if not valor:
-            raise DatosClienteInvalidosError(
-                f"El campo {campo} no puede estar vacío."
-            )
+            raise DatosClienteInvalidosError(f"El campo {campo} no puede estar vacío.")
 
         # Devuelvo el dato validado.
         return valor
@@ -72,15 +66,11 @@ class Cliente(Entidad):
 
         # Aplico el límite de longitud propuesto para el proyecto.
         if not 2 <= len(nombre) <= 100:
-            raise DatosClienteInvalidosError(
-                "El nombre debe tener entre 2 y 100 caracteres."
-            )
+            raise DatosClienteInvalidosError("El nombre debe tener entre 2 y 100 caracteres.")
 
         # Verifico que el nombre contenga alguna letra.
         if not any(caracter.isalpha() for caracter in nombre):
-            raise DatosClienteInvalidosError(
-                "El nombre debe contener al menos una letra."
-            )
+            raise DatosClienteInvalidosError("El nombre debe contener al menos una letra.")
 
         # Devuelvo el nombre validado.
         return nombre
@@ -93,9 +83,7 @@ class Cliente(Entidad):
 
         # Verifico su estructura básica.
         if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", correo):
-            raise DatosClienteInvalidosError(
-                "El correo electrónico tiene un formato inválido."
-            )
+            raise DatosClienteInvalidosError("El correo electrónico tiene un formato inválido.")
 
         # Devuelvo el correo validado.
         return correo
@@ -118,8 +106,7 @@ class Cliente(Entidad):
         return (
             f"Cliente: {self.nombre} | "
             f"Identificación: {self.identificador} | "
-            f"Correo: {self.correo}"
-        )
+            f"Correo: {self.correo}")
 
 
 # Gestiono los clientes mediante una lista en memoria.
@@ -131,20 +118,16 @@ class GestorClientes:
         self.__clientes = []
 
     # Registro clientes con datos válidos e identificadores únicos.
-    def registrar_cliente(
-        self, identificador=None, nombre=None, correo=None
-    ):
+    def registrar_cliente(self, identificador=None, nombre=None, correo=None):
         # Creo el cliente y ejecuto sus validaciones.
         cliente = Cliente(identificador, nombre, correo)
 
         # Verifico si el identificador ya está registrado.
         if any(
             existente.identificador == cliente.identificador
-            for existente in self.__clientes
-        ):
+            for existente in self.__clientes):
             raise ClienteDuplicadoError(
-                "Ya existe un cliente con ese identificador."
-            )
+                "Ya existe un cliente con ese identificador.")
 
         # Agrego el cliente después de validar todos los datos.
         self.__clientes.append(cliente)
@@ -158,9 +141,7 @@ class GestorClientes:
     # Busco un cliente registrado.
     def buscar_cliente(self, identificador=None):
         # Valido el identificador recibido.
-        identificador = Cliente._validar_texto(
-            identificador, "identificador"
-        )
+        identificador = Cliente._validar_texto(identificador, "identificador")
 
         # Recorro la lista interna.
         for cliente in self.__clientes:
@@ -173,11 +154,12 @@ class GestorClientes:
                 return cliente
 
         # Informo que el cliente no está registrado.
-        raise ClienteNoEncontradoError(
-            "No existe un cliente con ese identificador."
-        )
+        raise ClienteNoEncontradoError("No existe un cliente con ese identificador.")
 
     # Consulto los clientes registrados.
     def listar_clientes(self):
+       # Registro la consulta del listado de clientes.
+        logger.info("Listado de clientes consultado.")
+        
         # Devuelvo una copia para proteger la lista interna.
         return self.__clientes.copy()
