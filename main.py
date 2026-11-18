@@ -36,7 +36,7 @@ def registrar_cliente():
 
         # Registro el cliente mediante el gestor.
         cliente = gestor_clientes.registrar_cliente(
-            identificador, nombre, correo )
+            identificador, nombre, correo)
 
         # Confirmo el registro.
         print("Cliente registrado correctamente.")
@@ -78,7 +78,7 @@ def buscar_cliente():
     except ClienteNoEncontradoError as error:
         # Informo que no se encontró el cliente.
         print(f"Error: {error}")
-        logger.warning("Consulta de cliente no encontrada.")
+        logger.warning("Consulta de cliente no encontrada: %s", error)
 
     except Exception:
         # Registro cualquier error inesperado.
