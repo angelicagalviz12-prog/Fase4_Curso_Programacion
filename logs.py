@@ -15,7 +15,7 @@ ARCHIVO_LOGS = CARPETA_LOGS / "sistema.log"
 def configurar_logs():
     
     # Establezco el formato de los mensajes de registro.
-    formato = "%(asctime)s - %(levelname)s -%(name)s - %(message)s"
+    formato = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     
     # Configuro el registro en archivo y en consola.
     logging.basicConfig(
