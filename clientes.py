@@ -113,7 +113,7 @@ class Cliente(Entidad):
         return self.__correo
 
     # Implemento el método abstracto definido en Entidad.
-    def mostrar_information(self):
+    def mostrar_informacion(self):
         # Construyo la descripción del cliente.
         return (
             f"Cliente: {self.nombre} | "
