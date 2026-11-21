@@ -138,23 +138,32 @@ def registrar_servicio():
         identificador = input("Ingrese el identificador: ")
         nombre = input("Ingrese el nombre del servicio: ")
         tarifa = float(input("Ingrese la tarifa por hora: "))
+        
+        respuesta = input("¿El servicio está disponible? (s/n): ").strip().lower()
+        
+        if respuesta not in ("s", "n"):
+            print("Respuesta inválida. Ingrese s o n.")
+            logger.warning("Se ingresó una disponibilidad inválida.")
+            return
+        
+        disponible = respuesta == "s"
 
         # Creo el servicio según el tipo seleccionado.
         if tipo == "1":
             servicio = ServicioSala(
-                identificador, nombre, tarifa)
+                identificador, nombre, tarifa, disponible)
 
         elif tipo == "2":
             cantidad = int(input("Ingrese la cantidad de equipos: "))
 
             servicio = ServicioEquipo(
-                identificador, nombre, tarifa, cantidad)
+                identificador, nombre, tarifa, cantidad, disponible)
 
         elif tipo == "3":
             recargo = float(input("Ingrese el recargo adicional: "))
 
             servicio = ServicioAsesoria(
-                identificador, nombre, tarifa, recargo)
+                identificador, nombre, tarifa, recargo, disponible)
 
         else:
             print("Tipo de servicio inválido.")
@@ -174,7 +183,6 @@ def registrar_servicio():
         print("Servicio registrado correctamente.")
         print(servicio.mostrar_informacion())
 
-        logger.info("Servicio registrado correctamente.")
 
     except (ValueError, ServicioInvalidoError) as error:
         print(f"Error: {error}")
@@ -183,6 +191,12 @@ def registrar_servicio():
     except Exception:
         logger.exception("Error inesperado al registrar un servicio.")
         print("Ocurrió un error inesperado durante el registro.")
+        
+    else:
+        logger.info("Proceso de registro de servicio finalizado correctamente.")
+        
+    finally:
+        logger.info("Finalizó el intento de registro de servicio.")
 
 # Defino la función para listar los servicios.
 def listar_servicios():
@@ -261,8 +275,9 @@ def crear_reserva():
         print(f"Error: {error}")
         logger.warning("No se pudo crear la reserva: %s", error)
 
-    except ValueError:
+    except ValueError as error:
         print("Error: debe ingresar un valor numérico válido.")
+        logger.warning("Dato numérico inválido al crear la reserva: %s", error)
 
     except Exception:
         logger.exception("Error inesperado al crear una reserva.")
@@ -339,8 +354,9 @@ def confirmar_reserva():
         print(f"Error: {error}")
         logger.warning("No se pudo confirmar la reserva: %s", error)
 
-    except ValueError:
-        print("Error: ingrese valores numéricos válidos.")
+    except ValueError as error:
+        print("Error: debe ingresar un valor numérico válido.")
+        logger.warning("Dato numérico inválido al confirmar la reserva: %s", error)
 
     except Exception:
         logger.exception("Error inesperado al confirmar una reserva.")
@@ -381,8 +397,9 @@ def cancelar_reserva():
         print(f"Error: {error}")
         logger.warning("No se pudo cancelar la reserva: %s", error)
 
-    except ValueError:
+    except ValueError as error:
         print("Error: debe ingresar un número válido.")
+        logger.warning("Dato numérico inválido al cancelar la reserva: %s", error)
 
     except Exception:
         logger.exception("Error inesperado al cancelar una reserva.")
